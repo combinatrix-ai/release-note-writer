@@ -1,0 +1,64 @@
+name: "Release Note Writer"
+description: "Generate a release note by comparing git changes using AI"
+author: "combinatrix-ai"
+
+inputs:
+  compare_to:
+    description: "Comparison mode: github_latest (compare with latest GitHub release), auto_tag (find and use latest git tag), or specified (use specific tag)"
+    required: false
+    default: "github_latest"
+  tag:
+    description: "Specific git tag to compare with HEAD. Required when compare_to is 'specified'."
+    required: false
+    default: ""
+  model_name:
+    description: "Optional model name for generating the release note. Defaults to 'gemini-2.0-flash-thinking-exp-01-21'."
+    required: false
+    default: "gemini-2.0-flash-thinking-exp-01-21"
+  api_key:
+    description: "Google Cloud API key for using the model."
+    required: true
+
+outputs:
+  release_note:
+    description: "The generated release note."
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        pip install prompttrail==0.2.1 requests>=2.31.0 types-requests>=2.31.0
+
+    - name: Generate Release Note
+      shell: bash
+      env:
+        INPUT_COMPARE_TO: ${{ inputs.compare_to }}
+        INPUT_TAG: ${{ inputs.tag }}
+        INPUT_MODEL_NAME: ${{ inputs.model_name }}
+        INPUT_API_KEY: ${{ inputs.api_key }}
+        GOOGLE_CLOUD_API_KEY: ${{ inputs.api_key }}
+      run: |
+        # Create temporary file for output
+        TEMP_OUTPUT=$(mktemp)
+        
+        # Run the Python script
+        python ${{ github.action_path }}/release_note_writer.py \
+          --compare-to "$INPUT_COMPARE_TO" \
+          --tag "$INPUT_TAG" \
+          --output "$TEMP_OUTPUT"
+        
+        # Read and publish the output
+        echo "release_note<<EOF" >> $GITHUB_OUTPUT
+        cat "$TEMP_OUTPUT" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+        
+        # Cleanup
+        rm "$TEMP_OUTPUT"

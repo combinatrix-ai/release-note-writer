@@ -1,0 +1,20 @@
+[project]
+name = "release-note-writer"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "hmirin", email = "panda.1192@gmail.com" }
+]
+dependencies = [
+    "prompttrail==0.2.1",
+    "requests>=2.31.0",
+    "types-requests>=2.31.0",
+]
+readme = "README.md"
+requires-python = ">= 3.8"
+
+[tool.rye]
+managed = true
+dev-dependencies = [
+    "ruff>=0.9.5",
+]
